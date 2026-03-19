@@ -41,11 +41,16 @@ ollama pull nomic-embed-text
 
 ---
 
+## Requirements
+
+- Python 3.10+
+- [Ollama](https://ollama.com) running locally (or on a remote server)
+
 ## Setup
 
 ```bash
-git clone <repo>
-cd support-ai
+git clone https://github.com/ictsolved/rag-support-system.git
+cd rag-support-system
 
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
