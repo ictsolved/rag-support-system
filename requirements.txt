@@ -1,0 +1,8 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+chromadb>=0.4.24
+ollama>=0.1.8
+python-dotenv>=1.0.0
+pandas>=2.0.0
+aiofiles>=23.2.0
+python-multipart>=0.0.9

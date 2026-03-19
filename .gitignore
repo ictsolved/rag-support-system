@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Environment
+.env
+
+# Data stores (auto-created at runtime)
+db/
+sessions.db
+
+# Bulk data files (large, import manually — not for version control)
+data/*.csv
+data/*.json
+data/*.jsonl
+data/*.sql
+
+# Keep the sample file that ships with the repo
+!data/sample_tickets.csv
+
+# Product configs are project-specific — create your own from products/example.json
+products/*.json
+!products/example.json
+
+# Tools are project-specific data extraction scripts — not part of the core
+tools/*.py
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

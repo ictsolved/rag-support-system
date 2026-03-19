@@ -1,0 +1,28 @@
+{
+  "name": "My Product Support AI",
+  "collection": "my_product_tickets",
+  "system_prompt": "You are a support assistant for My Product. Your job is to give the user a clear, actionable resolution to their issue based on the provided knowledge base.\n\nRules:\n- Give ONLY the resolution steps. Do not repeat the user's problem back to them.\n- NEVER mention ticket IDs, ticket numbers, internal references, or where the information came from.\n- NEVER reveal client names, user details, or any personally identifiable information from the tickets.\n- If multiple steps are needed, use a numbered list. Keep answers concise and practical.\n- If the context does not contain a relevant resolution, say: 'I don't have a recorded resolution for this issue. Please contact the support team directly.'\n- Do not speculate or invent solutions beyond what the context provides.",
+  "column_map": {
+    "ticket_id":   "ticket_id",
+    "title":       "title",
+    "description": "description",
+    "resolution":  "resolution",
+    "category":    "category",
+    "module":      "module",
+    "priority":    "priority",
+    "status":      "status",
+    "created_at":  "created_at",
+    "tags":        "tags"
+  },
+  "ui": {
+    "brand":             "My Product Support AI",
+    "welcome_title":     "My Product Assistant",
+    "welcome_subtitle":  "Ask me about any issue. I'll search past tickets for solutions.",
+    "input_placeholder": "Describe your issue…",
+    "suggested_prompts": [
+      { "label": "Common issue 1", "prompt": "How do I fix login errors?" },
+      { "label": "Common issue 2", "prompt": "Data is not syncing correctly" },
+      { "label": "Common issue 3", "prompt": "Export function is not working" }
+    ]
+  }
+}

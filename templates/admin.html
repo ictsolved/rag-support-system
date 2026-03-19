@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Support AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0d1117;
+      --surface:    #1c2128;
+      --surface-2:  #22272e;
+      --border:     #30363d;
+      --accent:     #388bfd;
+      --text:       #e6edf3;
+      --text-muted: #7d8590;
+      --text-dim:   #4d5566;
+      --danger:     #f85149;
+      --success:    #3fb950;
+      --warn:       #e3b341;
+      --radius:     8px;
+    }
+
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px; line-height: 1.6; }
+
+    /* ── Header ── */
+    .admin-header {
+      height: 52px;
+      background: #161b22;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .brand-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 7px;
+      display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .brand-name { font-weight: 600; font-size: 15px; }
+    .admin-badge { font-size: 11px; background: var(--surface-2); color: var(--text-muted);
+      border: 1px solid var(--border); padding: 2px 8px; border-radius: 10px; }
+    .btn-back { font-size: 13px; color: var(--text-muted); text-decoration: none;
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+      transition: all .12s; }
+    .btn-back:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── Nav tabs ── */
+    .admin-nav {
+      background: #161b22;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex; gap: 4px;
+    }
+    .nav-tab {
+      padding: 10px 16px;
+      background: none; border: none;
+      color: var(--text-muted); cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: all .12s;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Main ── */
+    .admin-main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Stat cards ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+    @media (max-width: 800px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+    }
+    .stat-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .stat-card.pos .stat-value { color: var(--success); }
+    .stat-card.neg .stat-value { color: var(--danger); }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      margin: 24px 0 12px;
+    }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--surface-2); }
+    th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px;
+      white-space: nowrap; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); font-size: 13px;
+      vertical-align: middle; }
+    tr:hover td { background: var(--surface); }
+    .td-truncate { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .td-id { font-family: "SF Mono", Consolas, monospace; font-size: 12px; color: var(--accent); }
+    .td-muted { color: var(--text-muted); font-size: 12px; }
+    .td-empty { text-align: center; color: var(--text-dim); padding: 32px; }
+
+    /* Badges */
+    .badge { padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+    .badge-cat  { background: #1f4e3d; color: #3fb950; }
+    .badge-mod  { background: #1e3a5f; color: #79c0ff; }
+    .badge-high { background: #4d1e1e; color: #f85149; }
+    .badge-med  { background: #4d3a1e; color: #e3b341; }
+    .badge-low  { background: #1e2d1e; color: #7ee787; }
+    .badge-pos  { background: #1f4e3d; color: #3fb950; }
+    .badge-neg  { background: #4d1e1e; color: #f85149; }
+
+    .rel-bar { display: flex; align-items: center; gap: 6px; }
+    .rel-fill { height: 4px; border-radius: 2px; background: var(--accent); min-width: 2px; }
+    .rel-text { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── Buttons ── */
+    .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: all .12s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #1f6feb; }
+    .btn-primary:disabled { background: var(--text-dim); cursor: not-allowed; }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--surface); border-color: var(--accent); }
+    .btn-danger { background: none; color: var(--danger); border: 1px solid var(--border);
+      padding: 4px 10px; font-size: 12px; border-radius: 5px; cursor: pointer; transition: all .12s; }
+    .btn-danger:hover { background: #2a1a1a; border-color: var(--danger); }
+
+    /* ── Search row ── */
+    .search-row { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .search-row input { flex: 1; min-width: 200px; padding: 8px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 13px; outline: none; }
+    .search-row input:focus { border-color: var(--accent); }
+    .doc-count { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding: 14px 0; }
+    .pagination button { padding: 5px 14px; }
+    .page-info { font-size: 12px; color: var(--text-muted); }
+
+    /* ── Import form ── */
+    .import-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; max-width: 560px;
+    }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 9px 12px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+      font-size: 13px; outline: none; margin-bottom: 12px; transition: border-color .15s; }
+    .form-input:focus { border-color: var(--accent); }
+    .col-hint { font-size: 12px; color: var(--text-dim); background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+      margin-bottom: 16px; line-height: 1.6; }
+    .col-hint code { color: #79c0ff; font-family: "SF Mono", Consolas, monospace; font-size: 11px; }
+
+    .progress-wrap { margin-top: 16px; display: none; }
+    .progress-bar { height: 6px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width .3s; }
+    .progress-text { font-size: 12px; color: var(--text-muted); }
+    .alert { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 12px; display: none; }
+    .alert-err { background: #2a1a1a; border: 1px solid #4d1e1e; color: var(--danger); }
+    .alert-ok  { background: #1e2d1e; border: 1px solid #2d4a2d; color: var(--success); }
+
+    .file-drop {
+      border: 2px dashed var(--border); border-radius: 8px;
+      padding: 28px 20px; text-align: center; cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .file-drop:hover, .file-drop.drag-over { border-color: var(--accent); background: rgba(56,139,253,.06); }
+    .file-drop-icon { font-size: 28px; margin-bottom: 6px; }
+    .file-drop-text { font-size: 14px; color: var(--text-muted); margin-bottom: 2px; }
+    .file-drop-hint  { font-size: 12px; color: var(--text-dim); }
+    .file-selected {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 14px;
+    }
+    .file-sel-icon { font-size: 18px; }
+    .file-sel-name { flex: 1; font-size: 13px; color: var(--text); word-break: break-all; }
+    .file-sel-clear {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 18px; cursor: pointer; line-height: 1; padding: 0 2px;
+    }
+    .file-sel-clear:hover { color: var(--danger); }
+
+    /* ── Feedback summary ── */
+    .fb-summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    @media (max-width: 600px) { .fb-summary-grid { grid-template-columns: 1fr; } }
+
+    /* ── Loading spinner ── */
+    .loading { text-align: center; color: var(--text-muted); padding: 32px; font-size: 13px; }
+
+    /* ── Login overlay ── */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 40px;
+      width: 360px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    .login-logo { text-align: center; font-size: 32px; }
+    .login-title { text-align: center; font-size: 18px; font-weight: 600; }
+    .login-subtitle { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: -10px; }
+    .login-input {
+      width: 100%; padding: 10px 14px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px; outline: none;
+      transition: border-color .15s;
+    }
+    .login-input:focus { border-color: var(--accent); }
+    .login-btn {
+      width: 100%; padding: 10px;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 8px; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: background .12s;
+    }
+    .login-btn:hover { background: #1f6feb; }
+    .login-err { color: var(--danger); font-size: 13px; text-align: center; display: none; }
+
+    /* ── Sessions tab ── */
+    .session-row { cursor: pointer; }
+    .session-row:hover td { background: var(--surface-2); }
+    .conv-panel {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 480px; max-width: 95vw;
+      background: var(--surface); border-left: 1px solid var(--border);
+      z-index: 100; display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .25s;
+    }
+    .conv-panel.open { transform: translateX(0); }
+    .conv-panel-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .conv-panel-title { font-size: 14px; font-weight: 600; }
+    .conv-close {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .conv-close:hover { color: var(--text); }
+    .conv-messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .conv-msg { display: flex; gap: 10px; }
+    .conv-msg-role { font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; padding-top: 2px; min-width: 60px; }
+    .conv-msg-role.user { color: var(--accent); }
+    .conv-msg-content { font-size: 13px; color: var(--text); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<!-- ── Login overlay ─────────────────────────────────────────────────────────── -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-subtitle">Enter your admin password to continue</div>
+    <input class="login-input" type="password" id="loginPassword" placeholder="Password" />
+    <button class="login-btn" id="loginBtn">Sign In</button>
+    <div class="login-err" id="loginErr">Incorrect password</div>
+  </div>
+</div>
+
+<!-- ── Session detail panel ───────────────────────────────────────────────────── -->
+<div class="conv-panel" id="convPanel">
+  <div class="conv-panel-header">
+    <span class="conv-panel-title" id="convPanelTitle">Conversation</span>
+    <button class="conv-close" id="convClose">×</button>
+  </div>
+  <div class="conv-messages" id="convMessages"></div>
+</div>
+
+<header class="admin-header">
+  <div class="header-left">
+    <div class="brand-icon">🤖</div>
+    <span class="brand-name" id="adminBrand">Support AI</span>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <a href="/" class="btn-back">← Back to Chat</a>
+</header>
+
+<nav class="admin-nav">
+  <button class="nav-tab active" data-tab="overview">Overview</button>
+  <button class="nav-tab" data-tab="knowledge">Knowledge Base</button>
+  <button class="nav-tab" data-tab="sessions">Sessions</button>
+  <button class="nav-tab" data-tab="import">Import</button>
+  <button class="nav-tab" data-tab="feedback">Feedback</button>
+</nav>
+
+<main class="admin-main">
+
+  <!-- ── Overview ── -->
+  <section class="tab-content active" id="tab-overview">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="statDocs">—</div>
+        <div class="stat-label">Documents Indexed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statSessions">—</div>
+        <div class="stat-label">Chat Sessions</div>
+      </div>
+      <div class="stat-card pos">
+        <div class="stat-value" id="statPos">—</div>
+        <div class="stat-label">👍 Positive Feedback</div>
+      </div>
+      <div class="stat-card neg">
+        <div class="stat-value" id="statNeg">—</div>
+        <div class="stat-label">👎 Negative Feedback</div>
+      </div>
+    </div>
+
+    <div class="section-title">System Info</div>
+    <div class="table-wrap" style="max-width:480px">
+      <table>
+        <tbody id="sysInfoTable"></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">Recent Feedback</div>
+    <div id="recentFeedbackWrap"><div class="loading">Loading…</div></div>
+  </section>
+
+  <!-- ── Knowledge Base ── -->
+  <section class="tab-content" id="tab-knowledge">
+    <div class="search-row">
+      <input type="text" id="docSearch" placeholder="Semantic search across knowledge base…" />
+      <button class="btn btn-primary" id="searchBtn">Search</button>
+      <button class="btn btn-secondary" id="clearSearchBtn">Browse All</button>
+      <span class="doc-count" id="docCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Module</th>
+            <th>Priority</th>
+            <th>Relevance</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="docsBody"><tr><td colspan="7" class="td-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+
+  <!-- ── Sessions ── -->
+  <section class="tab-content" id="tab-sessions">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="section-title" style="margin:0" id="sessionCount">All Conversations</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Title</th>
+          <th>Messages</th>
+          <th>Started</th>
+          <th>Last active</th>
+        </tr></thead>
+        <tbody id="sessionsBody"><tr><td colspan="4" class="td-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Import ── -->
+  <section class="tab-content" id="tab-import">
+    <div class="import-card">
+      <label class="form-label">Select File</label>
+      <input type="file" id="importFile" accept=".csv,.json,.jsonl" style="display:none" />
+      <div class="file-drop" id="adminFileDropZone">
+        <div class="file-drop-icon">📂</div>
+        <div class="file-drop-text">Click to select a file</div>
+        <div class="file-drop-hint">.csv &nbsp;·&nbsp; .json &nbsp;·&nbsp; .jsonl</div>
+      </div>
+      <div class="file-selected" id="adminFileSelected" style="display:none">
+        <span class="file-sel-icon">📄</span>
+        <span class="file-sel-name" id="adminFileSelName"></span>
+        <button class="file-sel-clear" id="adminFileSelClear">×</button>
+      </div>
+      <div class="col-hint" style="margin-top:12px">
+        Expected columns: <code>ticket_id</code>, <code>title</code>, <code>description</code>,
+        <code>resolution</code>, <code>category</code>, <code>module</code>,
+        <code>priority</code>, <code>status</code>, <code>created_at</code>, <code>tags</code>
+      </div>
+      <button class="btn btn-primary" id="importBtn" disabled style="margin-top:16px">Start Import</button>
+      <div class="progress-wrap" id="importProgressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="importFill"></div></div>
+        <div class="progress-text" id="importText">Starting…</div>
+      </div>
+      <div class="alert alert-err" id="importErr"></div>
+      <div class="alert alert-ok"  id="importOk"></div>
+    </div>
+  </section>
+
+  <!-- ── Feedback ── -->
+  <section class="tab-content" id="tab-feedback">
+    <div class="fb-summary-grid" id="fbSummaryGrid">
+      <div class="stat-card"><div class="stat-value" id="fbTotal">—</div><div class="stat-label">Total Ratings</div></div>
+      <div class="stat-card pos"><div class="stat-value" id="fbPos">—</div><div class="stat-label">👍 Positive</div></div>
+      <div class="stat-card neg"><div class="stat-value" id="fbNeg">—</div><div class="stat-label">👎 Negative</div></div>
+    </div>
+    <div class="section-title">All Feedback</div>
+    <div id="feedbackWrap"><div class="loading">Loading…</div></div>
+  </section>
+
+</main>
+
+<script>
+/* ── Auth ─────────────────────────────────────────────────────────────────── */
+let _adminToken = sessionStorage.getItem("adminToken") || "";
+
+async function tryLogin() {
+  const pw  = document.getElementById("loginPassword").value;
+  const err = document.getElementById("loginErr");
+  err.style.display = "none";
+  try {
+    await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pw }),
+    }).then(async r => {
+      if (!r.ok) throw new Error("bad");
+      return r.json();
+    });
+    _adminToken = pw;
+    sessionStorage.setItem("adminToken", pw);
+    document.getElementById("loginOverlay").style.display = "none";
+    init();
+  } catch {
+    err.style.display = "block";
+    document.getElementById("loginPassword").value = "";
+  }
+}
+
+document.getElementById("loginBtn").addEventListener("click", tryLogin);
+document.getElementById("loginPassword").addEventListener("keydown", e => {
+  if (e.key === "Enter") tryLogin();
+});
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+document.querySelectorAll(".nav-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(s => s.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
+    if (tab.dataset.tab === "knowledge" && !_docsLoaded) loadDocs();
+    if (tab.dataset.tab === "sessions"  && !_sessionsLoaded) loadSessions();
+    if (tab.dataset.tab === "feedback"  && !_fbLoaded)   loadFeedback();
+  });
+});
+
+/* ── API helper ───────────────────────────────────────────────────────────── */
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json", "X-Admin-Token": _adminToken } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    if (res.status === 401) {
+      sessionStorage.removeItem("adminToken");
+      location.reload();
+    }
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || res.statusText);
+  }
+  return res.json();
+}
+
+function escHtml(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function relBar(rel) {
+  if (!rel && rel !== 0) return "";
+  const pct = Math.round(rel * 100);
+  const color = pct >= 70 ? "var(--success)" : pct >= 45 ? "var(--warn)" : "var(--danger)";
+  return `<div class="rel-bar">
+    <div class="rel-fill" style="width:${pct}px;max-width:80px;background:${color}"></div>
+    <span class="rel-text">${pct}%</span>
+  </div>`;
+}
+
+function priorityBadge(p) {
+  if (!p) return "";
+  const cls = p === "Critical" || p === "High" ? "badge-high" : p === "Medium" ? "badge-med" : "badge-low";
+  return `<span class="badge ${cls}">${escHtml(p)}</span>`;
+}
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)   return "just now";
+  if (m < 60)  return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+/* ── Overview ─────────────────────────────────────────────────────────────── */
+async function loadOverview() {
+  const s = await api("GET", "/api/admin/stats");
+
+  document.getElementById("adminBrand").textContent = s.product || "Support AI";
+  document.getElementById("statDocs").textContent     = (s.doc_count     || 0).toLocaleString();
+  document.getElementById("statSessions").textContent = (s.session_count || 0).toLocaleString();
+  document.getElementById("statPos").textContent      = (s.positive      || 0).toLocaleString();
+  document.getElementById("statNeg").textContent      = (s.negative      || 0).toLocaleString();
+
+  document.getElementById("sysInfoTable").innerHTML = [
+    ["Product",    s.product    || "—"],
+    ["Collection", s.collection || "—"],
+    ["LLM Model",  s.llm_model  || "—"],
+    ["Messages",   (s.message_count || 0).toLocaleString()],
+  ].map(([k, v]) => `<tr><td style="color:var(--text-muted);width:140px">${k}</td><td>${escHtml(v)}</td></tr>`).join("");
+
+  // Recent feedback preview
+  const fb = await api("GET", "/api/admin/feedback?limit=5");
+  renderFeedbackTable("recentFeedbackWrap", fb.feedback, true);
+}
+
+/* ── Knowledge Base ───────────────────────────────────────────────────────── */
+let _docsLoaded = false;
+let _docsOffset = 0;
+const _docsLimit = 20;
+let _docsTotal  = 0;
+let _searchMode = false;
+
+async function loadDocs() {
+  _docsLoaded = true;
+  _searchMode = false;
+  _docsOffset = 0;
+  await fetchDocs();
+}
+
+async function fetchDocs() {
+  document.getElementById("docsBody").innerHTML =
+    `<tr><td colspan="7" class="td-empty">Loading…</td></tr>`;
+  const data = await api("GET", `/api/admin/docs?limit=${_docsLimit}&offset=${_docsOffset}`);
+  _docsTotal = data.total;
+  document.getElementById("docCount").textContent =
+    `${data.total.toLocaleString()} total documents`;
+  renderDocsTable(data.docs, false);
+  renderPagination();
+}
+
+async function searchDocs() {
+  const q = document.getElementById("docSearch").value.trim();
+  if (!q) { await loadDocs(); return; }
+  _searchMode = true;
+  document.getElementById("docsBody").innerHTML =
+    `<tr><td colspan="7" class="td-empty">Searching…</td></tr>`;
+  const data = await api("GET", `/api/admin/docs/search?q=${encodeURIComponent(q)}&limit=20`);
+  document.getElementById("docCount").textContent =
+    `${data.results.length} results for "${escHtml(q)}"`;
+  renderDocsTable(data.results, true);
+  document.getElementById("pagination").innerHTML = "";
+}
+
+function renderDocsTable(docs, showRelevance) {
+  const tbody = document.getElementById("docsBody");
+  if (!docs.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="td-empty">No documents found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = docs.map(d => {
+    const meta = d.metadata || {};
+    const title = meta.title || d.title || "—";
+    return `
+      <tr>
+        <td class="td-id">${escHtml(d.doc_id)}</td>
+        <td class="td-truncate">${escHtml(title)}</td>
+        <td>${meta.category ? `<span class="badge badge-cat">${escHtml(meta.category)}</span>` : "—"}</td>
+        <td>${meta.module   ? `<span class="badge badge-mod">${escHtml(meta.module)}</span>`   : "—"}</td>
+        <td>${priorityBadge(meta.priority) || "—"}</td>
+        <td>${showRelevance && d.relevance != null ? relBar(d.relevance) : "—"}</td>
+        <td>
+          <button class="btn-danger" onclick="deleteDoc('${escHtml(d.doc_id)}', this)">Delete</button>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
+function renderPagination() {
+  const el      = document.getElementById("pagination");
+  const page    = Math.floor(_docsOffset / _docsLimit) + 1;
+  const total   = Math.ceil(_docsTotal / _docsLimit);
+  const hasPrev = _docsOffset > 0;
+  const hasNext = _docsOffset + _docsLimit < _docsTotal;
+  el.innerHTML = `
+    <button class="btn btn-secondary" onclick="prevPage()" ${hasPrev ? "" : "disabled"}>← Prev</button>
+    <span class="page-info">Page ${page} of ${total || 1}</span>
+    <button class="btn btn-secondary" onclick="nextPage()" ${hasNext ? "" : "disabled"}>Next →</button>`;
+}
+
+async function prevPage() { _docsOffset = Math.max(0, _docsOffset - _docsLimit); await fetchDocs(); }
+async function nextPage() { _docsOffset += _docsLimit; await fetchDocs(); }
+
+async function deleteDoc(docId, btn) {
+  if (!confirm(`Delete document "${docId}"?`)) return;
+  btn.disabled = true;
+  btn.textContent = "…";
+  try {
+    await api("DELETE", `/api/data/${encodeURIComponent(docId)}`);
+    btn.closest("tr").remove();
+    _docsTotal = Math.max(0, _docsTotal - 1);
+    document.getElementById("docCount").textContent =
+      `${_docsTotal.toLocaleString()} total documents`;
+    renderPagination();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = "Delete";
+    alert("Delete failed: " + err.message);
+  }
+}
+
+document.getElementById("searchBtn").addEventListener("click", searchDocs);
+document.getElementById("clearSearchBtn").addEventListener("click", () => {
+  document.getElementById("docSearch").value = "";
+  loadDocs();
+});
+document.getElementById("docSearch").addEventListener("keydown", e => {
+  if (e.key === "Enter") searchDocs();
+});
+
+/* ── Import ───────────────────────────────────────────────────────────────── */
+let _importPollTimer = null;
+
+(function setupAdminFilePicker() {
+  const fileInput  = document.getElementById("importFile");
+  const dropZone   = document.getElementById("adminFileDropZone");
+  const selPanel   = document.getElementById("adminFileSelected");
+  const selName    = document.getElementById("adminFileSelName");
+  const selClear   = document.getElementById("adminFileSelClear");
+  const importBtn  = document.getElementById("importBtn");
+
+  function selectAdminFile(file) {
+    if (!file) return;
+    dropZone.style.display = "none";
+    selPanel.style.display = "flex";
+    selName.textContent    = file.name;
+    importBtn.disabled     = false;
+  }
+
+  dropZone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => selectAdminFile(fileInput.files[0]));
+  selClear.addEventListener("click", () => {
+    fileInput.value        = "";
+    dropZone.style.display = "";
+    selPanel.style.display = "none";
+    selName.textContent    = "";
+    importBtn.disabled     = true;
+  });
+  dropZone.addEventListener("dragover",  e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+  dropZone.addEventListener("drop", e => {
+    e.preventDefault();
+    dropZone.classList.remove("drag-over");
+    const f = e.dataTransfer.files[0];
+    if (f) { const dt = new DataTransfer(); dt.items.add(f); fileInput.files = dt.files; selectAdminFile(f); }
+  });
+})();
+
+document.getElementById("importBtn").addEventListener("click", async () => {
+  const fileInput = document.getElementById("importFile");
+  if (!fileInput.files.length) return;
+
+  document.getElementById("importErr").style.display = "none";
+  document.getElementById("importOk").style.display  = "none";
+  document.getElementById("importBtn").disabled = true;
+
+  const pw = document.getElementById("importProgressWrap");
+  pw.style.display = "block";
+  document.getElementById("importFill").style.width = "5%";
+  document.getElementById("importText").textContent  = "Uploading…";
+
+  try {
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    const res = await fetch("/api/ingest/upload", { method: "POST", body: formData, headers: { "X-Admin-Token": _adminToken } });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || res.statusText);
+    }
+
+    document.getElementById("importText").textContent = "Starting…";
+
+    _importPollTimer = setInterval(async () => {
+      const s = await api("GET", "/api/ingest/status");
+      if (s.state === "running" && s.total === 0) {
+        document.getElementById("importText").textContent = "Reading file…";
+        return;
+      }
+      const pct = s.total > 0 ? Math.round((s.processed / s.total) * 100) : 0;
+      document.getElementById("importFill").style.width = Math.max(pct, 5) + "%";
+      document.getElementById("importText").textContent =
+        `${(s.processed || 0).toLocaleString()} / ${(s.total || 0).toLocaleString()} (${pct}%)`;
+
+      if (s.state === "completed") {
+        clearInterval(_importPollTimer);
+        document.getElementById("importFill").style.width = "100%";
+        document.getElementById("importBtn").disabled = false;
+        document.getElementById("importOk").textContent =
+          `✓ Done — ${(s.processed || 0).toLocaleString()} documents indexed`;
+        document.getElementById("importOk").style.display = "block";
+        loadOverview();
+      } else if (s.state === "failed") {
+        clearInterval(_importPollTimer);
+        document.getElementById("importBtn").disabled = false;
+        document.getElementById("importErr").textContent = s.error || "Unknown error";
+        document.getElementById("importErr").style.display = "block";
+      }
+    }, 1000);
+  } catch (err) {
+    document.getElementById("importBtn").disabled = false;
+    document.getElementById("importErr").textContent = err.message;
+    document.getElementById("importErr").style.display = "block";
+  }
+});
+
+/* ── Sessions ─────────────────────────────────────────────────────────────── */
+let _sessionsLoaded = false;
+
+async function loadSessions() {
+  _sessionsLoaded = true;
+  const tbody = document.getElementById("sessionsBody");
+  tbody.innerHTML = `<tr><td colspan="4" class="td-empty">Loading…</td></tr>`;
+  const data = await api("GET", "/api/admin/sessions");
+  document.getElementById("sessionCount").textContent =
+    `All Conversations (${data.length.toLocaleString()})`;
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="td-empty">No conversations yet</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(s => `
+    <tr class="session-row" onclick="openSession('${escHtml(s.id)}', '${escHtml(s.title || "Untitled")}')">
+      <td class="td-truncate">${escHtml(s.title || "Untitled")}</td>
+      <td style="color:var(--text-muted)">${s.message_count || 0}</td>
+      <td class="td-muted" style="white-space:nowrap">${timeAgo(s.created_at)}</td>
+      <td class="td-muted" style="white-space:nowrap">${timeAgo(s.updated_at)}</td>
+    </tr>`).join("");
+}
+
+async function openSession(id, title) {
+  const panel = document.getElementById("convPanel");
+  const msgs  = document.getElementById("convMessages");
+  document.getElementById("convPanelTitle").textContent = title;
+  msgs.innerHTML = `<div class="loading">Loading…</div>`;
+  panel.classList.add("open");
+  try {
+    const session = await api("GET", `/api/admin/sessions/${id}`);
+    const messages = session.messages || [];
+    if (!messages.length) {
+      msgs.innerHTML = `<div style="color:var(--text-dim);font-size:13px">No messages</div>`;
+      return;
+    }
+    msgs.innerHTML = messages.map(m => `
+      <div class="conv-msg">
+        <span class="conv-msg-role ${m.role}">${m.role}</span>
+        <span class="conv-msg-content">${escHtml(m.content)}</span>
+      </div>`).join("");
+  } catch (err) {
+    msgs.innerHTML = `<div style="color:var(--danger);font-size:13px">${escHtml(err.message)}</div>`;
+  }
+}
+
+document.getElementById("convClose").addEventListener("click", () => {
+  document.getElementById("convPanel").classList.remove("open");
+});
+
+/* ── Feedback ─────────────────────────────────────────────────────────────── */
+let _fbLoaded = false;
+
+async function loadFeedback() {
+  _fbLoaded = true;
+  const data = await api("GET", "/api/admin/feedback?limit=100");
+  const s = data.summary;
+  document.getElementById("fbTotal").textContent = (s.total    || 0).toLocaleString();
+  document.getElementById("fbPos").textContent   = (s.positive || 0).toLocaleString();
+  document.getElementById("fbNeg").textContent   = (s.negative || 0).toLocaleString();
+  renderFeedbackTable("feedbackWrap", data.feedback, false);
+}
+
+function renderFeedbackTable(containerId, items, compact) {
+  const el = document.getElementById(containerId);
+  if (!items || !items.length) {
+    el.innerHTML = `<div style="color:var(--text-dim);font-size:13px;padding:16px 0">No feedback yet</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Rating</th>
+          <th>Session</th>
+          <th>Response preview</th>
+          ${compact ? "" : "<th>Comment</th>"}
+          <th>When</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(f => `
+            <tr>
+              <td>${f.rating === 1
+                ? '<span class="badge badge-pos">👍 Helpful</span>'
+                : '<span class="badge badge-neg">👎 Not helpful</span>'}</td>
+              <td class="td-truncate td-muted">${escHtml(f.session_title || "—")}</td>
+              <td class="td-truncate">${escHtml(f.message_preview || "—")}</td>
+              ${compact ? "" : `<td class="td-muted">${escHtml(f.comment || "—")}</td>`}
+              <td class="td-muted" style="white-space:nowrap">${timeAgo(f.timestamp)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
+async function init() {
+  await loadOverview();
+}
+
+// Check if already authenticated (token in sessionStorage)
+(async function bootstrap() {
+  if (!_adminToken) return;  // show login overlay
+  try {
+    // Validate stored token
+    const res = await fetch("/api/admin/stats", { headers: { "X-Admin-Token": _adminToken } });
+    if (res.ok) {
+      document.getElementById("loginOverlay").style.display = "none";
+      init();
+    } else {
+      sessionStorage.removeItem("adminToken");
+      _adminToken = "";
+    }
+  } catch {
+    // server not ready — leave login overlay
+  }
+})();
+</script>
+</body>
+</html>
